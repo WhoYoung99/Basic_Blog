@@ -36,8 +36,11 @@ class Handler(webapp2.RequestHandler):
         self.write(self.render_str(template, **kw))
 
 class MainHandler(Handler):
+    def render_front(self, title="", art="", error=""):
+        self.render("front.html", title=title, art=art, error=error)
+
     def get(self):
-        self.render("front.html")
+        self.render_front()
 
     def post(self):
         title = self.request.get("title")
@@ -46,8 +49,9 @@ class MainHandler(Handler):
         if title and art:
             self.write("Thank you!")
         else:
-            error = "title or art are missing."
-            self.render("front.html", error=error)
+            error = "title or art is missing."
+            print(art)
+            self.render_front(title, art, error)
 
 app = webapp2.WSGIApplication([('/', MainHandler),
                                 ],
