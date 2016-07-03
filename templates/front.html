@@ -21,5 +21,13 @@
         <input type="submit">
     </form>
 
+    <hr>
+
+    {% for art in arts %}
+        <div>
+            <div>{{art.title}}</div>
+            <pre>{{art.art}}</pre>
+        </div>
+    {% endfor %}
 </body>
 </html>

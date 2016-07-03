@@ -35,9 +35,15 @@ class Handler(webapp2.RequestHandler):
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
+class Art(db.Model):
+    title = db.StringProperty(required=True)
+    art = db.TextProperty(required=True)
+    time = db.DateTimeProperty(auto_now_add=True)
+
 class MainHandler(Handler):
     def render_front(self, title="", art="", error=""):
-        self.render("front.html", title=title, art=art, error=error)
+        arts = db.GqlQuery("SELECT * FROM Art ORDER BY time DESC")
+        self.render("front.html", title=title, art=art, error=error, arts=arts)
 
     def get(self):
         self.render_front()
@@ -47,7 +53,9 @@ class MainHandler(Handler):
         art = self.request.get("art")
 
         if title and art:
-            self.write("Thank you!")
+            a = Art(title=title, art=art)
+            a.put()
+            self.redirect('/')
         else:
             error = "title or art is missing."
             print(art)
