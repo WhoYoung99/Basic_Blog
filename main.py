@@ -35,7 +35,7 @@ class Handler(webapp2.RequestHandler):
 
 class MainHandler(Handler):
     def get(self):
-        self.write("demon in the head.")
+        self.render("blog.html")
 
 app = webapp2.WSGIApplication([('/', MainHandler),
                                 ],
