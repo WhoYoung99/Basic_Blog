@@ -5,28 +5,36 @@
     <link rel="stylesheet" type="text/css" href="templates/css/main.css">
 </head>
 <body>
-    <h1>Signup</h1>
-    <br>
-
-    <table>
-        <tr>
-            <th>Username:</th>
-            <td><input type="text"></td>
-            <td>{{error}}</td>
-        </tr>
-        <tr>
-            <th>Password:</th>
-            <td><input type="password"></td>
-        </tr>
-        <tr>
-            <th>Verify Password:</th>
-            <td><input type="password"></td>
-        </tr>
-        <tr>
-            <th>Email (optional):</th>
-            <td><input type="text"></td>
-        </tr>
-    </table>
+    <h1>Signup Page</h1>
+    <form method="post">
+        <h2 class="welcome">{{welcome}}</h2>
+        <table>
+            <tr>
+                <th>Username:</th>
+                <td><input type="text" name="user" value="{{username}}"></td>
+                <td class="error">{{error_username}}</td>
+            </tr>
+            <tr>
+                <th>Password:</th>
+                <td><input type="password" name="password" value=""></td>
+                <td class="error">{{error_password}}</td>
+            </tr>
+            <tr>
+                <th>Verify Password:</th>
+                <td><input type="password" name="verify" value=""></td>
+                <td class="error">{{error_verify}}</td>
+            </tr>
+            <tr>
+                <th>Email (optional):</th>
+                <td><input type="text" name="email" value="{{email}}"></td>
+                <td class="error">{{error_email}}</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td><input type="submit" style="center"></td>
+            </tr>
+        </table>
+    </form>
 
 </body>
 </html>

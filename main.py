@@ -20,6 +20,8 @@ import jinja2
 import hashlib
 import hmac
 
+from google.appengine.ext import db
+
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
                                 autoescape = True)
@@ -63,10 +65,81 @@ class BlogHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
-class MainHandler(Handler):
+
+USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+def valid_username(username):
+    return username and USER_RE.match(username)
+
+PASS_RE = re.compile(r"^.{3,20}$")
+def valid_password(password):
+    return password and PASS_RE.match(password)
+
+EMAIL_RE  = re.compile(r'^[\S]+@[\S]+\.[\S]+$')
+def valid_email(email):
+    return not email or EMAIL_RE.match(email)
+
+class Signup(BlogHandler):
+    def get(self):
+        self.render("blog.html")
+
+    def post(self):
+        have_error = False
+        self.username = self.request.get("user")
+        self.password = self.request.get("password")
+        self.verify = self.request.get("verify")
+        self.email = self.request.get("email")
+
+        params = dict(username=self.username,
+                      email=self.email)
+
+        if not valid_username:
+            have_error = True
+            params["error_username"] = "This wasn't a valid username."
+
+        if not valid_password(self.password):
+            params['error_password'] = "That wasn't a valid password."
+            have_error = True
+
+        elif self.password != self.verify:
+            params['error_verify'] = "Your passwords didn't match."
+            have_error = True
+
+        if not valid_email(self.email):
+            params['error_email'] = "That wasn't a valid email."
+            have_error = True
+
+        if have_error:
+            self.render("blog.html", **params)
+        else:
+            params['welcome'] = "Successfully signup, %s" % self.username
+            self.render("blog.html", **params)
+
+
+
+def make_salt(length=5):
+    return ''.join(random.sample(string.ascii_letters, length))
+
+def make_pw_hash(name, pw, salt=None):
+    if not salt:
+        salt = make_salt()
+    h = hashlib.sha256(name + pw + salt).hexdigest()
+    return "%s,%s" % (salt, h)
+
+def valid_pw(name, pw, h):
+    salt = h.split(',')[0]
+    return h == make_pw_hash(name, pw, salt)
+
+class User(db.Model):
+    user = db.StringProperty(required=True)
+    ps_hash = db.StringProperty(required=True)
+    email = db.StringProperty()
+
+
+
+class MainHandler(BlogHandler):
     def get(self):
         self.render("blog.html")
 
 app = webapp2.WSGIApplication([('/', MainHandler),
-                                ],
+                               ('/signup', Signup),],
                                 debug=True)
