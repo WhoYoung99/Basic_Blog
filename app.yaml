@@ -12,6 +12,12 @@ handlers:
 - url: /templates/css
   static_dir: templates/css
 
+- url: /blog/templates/css
+  static_dir: templates/css
+
+- url: /img
+  static_dir: img
+
 - url: .*
   script: main.app
 

@@ -1,40 +1,10 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Sign Up Page</title>
-    <link rel="stylesheet" type="text/css" href="templates/css/main.css">
-</head>
-<body>
-    <h1>Signup Page</h1>
-    <form method="post">
-        <h2 class="welcome">{{welcome}}</h2>
-        <table>
-            <tr>
-                <th>Username:</th>
-                <td><input type="text" name="user" value="{{username}}"></td>
-                <td class="error">{{error_username}}</td>
-            </tr>
-            <tr>
-                <th>Password:</th>
-                <td><input type="password" name="password" value=""></td>
-                <td class="error">{{error_password}}</td>
-            </tr>
-            <tr>
-                <th>Verify Password:</th>
-                <td><input type="password" name="verify" value=""></td>
-                <td class="error">{{error_verify}}</td>
-            </tr>
-            <tr>
-                <th>Email (optional):</th>
-                <td><input type="text" name="email" value="{{email}}"></td>
-                <td class="error">{{error_email}}</td>
-            </tr>
-            <tr>
-                <td></td>
-                <td><input type="submit" style="center"></td>
-            </tr>
-        </table>
-    </form>
+{% extends "base.html" %}
+{% block content %}
 
-</body>
-</html>
+Welcome, {{user}}!
+{% for p in posts %}
+    {{ p.render() | safe }}
+    <hr>
+    <br><br>
+{% endfor %}
+{% endblock %}

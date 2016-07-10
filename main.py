@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-import os, string, re
+import os, string, re, random
 import webapp2
 import jinja2
 import hashlib
@@ -44,6 +44,10 @@ def check_secure_val(secure_val):
     val = secure_val.split('|')[0]
     return val and secure_val == make_secure_val(val)
 
+def render_str(template, **params):
+    t = jinja_env.get_template(template)
+    return t.render(params)
+
 class BlogHandler(webapp2.RequestHandler):
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
@@ -65,6 +69,13 @@ class BlogHandler(webapp2.RequestHandler):
         cookie_val = self.request.cookies.get(name)
         return cookie_val and check_secure_val(cookie_val)
 
+    def login(self, user):
+        self.set_secure_cookie('user_id', str(user.key().id()))
+        self.set_secure_cookie('user_name', str(user))
+
+    def logout(self):
+        self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
+
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
 def valid_username(username):
@@ -80,7 +91,7 @@ def valid_email(email):
 
 class Signup(BlogHandler):
     def get(self):
-        self.render("blog.html")
+        self.render("signup-form.html")
 
     def post(self):
         have_error = False
@@ -101,7 +112,7 @@ class Signup(BlogHandler):
             have_error = True
 
         elif self.password != self.verify:
-            params['error_verify'] = "Your passwords didn't match."
+            params['error_verify'] = "Your password didn't match."
             have_error = True
 
         if not valid_email(self.email):
@@ -109,12 +120,20 @@ class Signup(BlogHandler):
             have_error = True
 
         if have_error:
-            self.render("blog.html", **params)
+            self.render("signup-form.html", **params)
         else:
-            params['welcome'] = "Successfully signup, %s" % self.username
-            self.render("blog.html", **params)
+            self.done()
 
+    def done(self):
+            raise NotImplementedError
 
+class Welcome(BlogHandler):
+    def get(self):
+        username = self.request.get('username')
+        if valid_username(username):
+            self.render('welcome.html', username=username)
+        else:
+            self.redirect('/signup')
 
 def make_salt(length=5):
     return ''.join(random.sample(string.ascii_letters, length))
@@ -131,15 +150,99 @@ def valid_pw(name, pw, h):
 
 class User(db.Model):
     user = db.StringProperty(required=True)
-    ps_hash = db.StringProperty(required=True)
+    password = db.StringProperty(required=True)
     email = db.StringProperty()
 
+    @classmethod
+    def register(cls, user, password, email=None):
+        return User(user=user,
+                    password=make_pw_hash(user, password),
+                    email=email)
 
+    @classmethod
+    def login(cls, user, pw):
+        u = cls.by_name(user)
+        if u and valid_pw(user, pw, u.password):
+            return u
 
-class MainHandler(BlogHandler):
+    @classmethod
+    def by_name(cls, user):
+        u = User.all().filter('user =', user).get()
+        return u
+
+class Posts(db.Model):
+    subject = db.StringProperty(required=True)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)
+    modified = db.DateTimeProperty(auto_now=True)
+
+    def render(self):
+        self._render_text = self.content.replace('\n', '<br>')
+        return render_str("post.html", p=self)
+
+class Register(Signup):
+    def done(self):
+        u = User.by_name(self.username)
+        if u:
+            error = "User already exists."
+            self.render('signup-form.html', error_username=error)
+        else:
+            u = User.register(self.username, self.password, self.email)
+            u.put()
+            self.login(u)
+            self.redirect('/welcome?username=%s' % self.username)
+
+class Login(BlogHandler):
     def get(self):
-        self.render("blog.html")
+        self.render('login.html')
 
-app = webapp2.WSGIApplication([('/', MainHandler),
-                               ('/signup', Signup),],
+    def post(self):
+        username = self.request.get('username')
+        password = self.request.get('password')
+
+        u = User.login(username, password)
+        if u:
+            self.login(u)
+            self.redirect('/blog')
+        else:
+            msg = 'Invalid login'
+            self.render('login.html', error = msg)
+
+class Newpost(BlogHandler):
+    def get(self):
+        self.render("new-post.html")
+
+    def post(self):
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+
+        if subject and content:
+            post = Posts(subject=subject, content=content)
+            post.put()
+            self.redirect("/blog/%s" % str(post.key().id()))
+        else:
+            error = "Required both subject and content!"
+            self.render("new-post.html", error=error, subject=subject, content=content)
+
+class PostPage(BlogHandler):
+    def get(self, post_id):
+        key = db.Key.from_path('Posts', int(post_id))
+        post = db.get(key)
+
+        self.render("permalink.html", post=post)
+
+
+class Main(BlogHandler):
+    def get(self):
+        # posts = Posts.all().order("-created")
+        posts = db.GqlQuery("SELECT * FROM Posts ORDER BY created DESC LIMIT 10")
+        user = self.request.cookies.get('user_id').split('|')[0]
+        self.render("blog.html", posts=posts, user=user)
+
+app = webapp2.WSGIApplication([('/blog', Main),
+                               ('/blog/newpost', Newpost),
+                               ('/blog/([0-9]+)', PostPage),
+                               ('/signup', Register),
+                               ('/login', Login),
+                               ('/welcome', Welcome)],
                                 debug=True)
