@@ -71,7 +71,7 @@ class BlogHandler(webapp2.RequestHandler):
 
     def login(self, user):
         self.set_secure_cookie('user_id', str(user.key().id()))
-        self.set_secure_cookie('user_name', str(user))
+        self.set_secure_cookie('user_name', str(user.user))
 
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
@@ -236,8 +236,20 @@ class Main(BlogHandler):
     def get(self):
         # posts = Posts.all().order("-created")
         posts = db.GqlQuery("SELECT * FROM Posts ORDER BY created DESC LIMIT 10")
-        user = self.request.cookies.get('user_id').split('|')[0]
+        user = self.request.cookies.get('user_name').split('|')[0]
         self.render("blog.html", posts=posts, user=user)
+
+    def post(self):
+        username = self.request.get('username')
+        password = self.request.get('password')
+
+        u = User.login(username, password)
+        if u:
+            self.login(u)
+            self.redirect('/blog')
+        else:
+            msg = 'Invalid login'
+            self.render('login.html', error = msg)
 
 app = webapp2.WSGIApplication([('/blog', Main),
                                ('/blog/newpost', Newpost),

@@ -10,16 +10,45 @@
     <div class="container">
         <div class="row">
             <a href="/blog">
-                <h1 class="col-md-10">Daily Blog</h1>
+                <h1 class="col-md-8">Daily Blog</h1>
             </a>
-            <h3 class="col-md-2">
-                <a href="/signup">Signup</a>
+            <div class="col-md-4">
+                {% if user %}
+                <h2>Welcome, {{user}}!</h2>
+                <form method="post">
+                    <input type="submit" value="Logout" class="login-bottom">
+                </form>
+                {% else %}
+                <table>
+                    <tr>
+                        <td>
+                            <br>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>User</td>
+                        <td>Password</td>
+                    </tr>
+                    <tr>
+                        <form method="post">
+                            <td>
+                                <input type="text" class="login" name="username">
+                            </td>
+                            <td>
+                                <input type="password" class="login" name="password">
+                            </td>
+                            <td>
+                                <input type="submit" value="Login" class="login-bottom">
+                            </td>
+                        </form>
+                    </tr>
+                </table>
                 <br>
-                <a href="/login">User Login</a>
-            </h3>
+                <a href="/signup">Signup</a>
+                {% endif %}
+            </div>
         </div>
         <div class="row">
-            <h2>{{username}}</h2>
             <a href="/blog/newpost">
                     <h3 class="col-md-12">Write something?</h3>
             </a>
