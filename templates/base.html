@@ -15,9 +15,10 @@
             <div class="col-md-4">
                 {% if user %}
                 <h2>Welcome, {{user}}!</h2>
-                <form method="post">
-                    <input type="submit" value="Logout" class="login-bottom">
-                </form>
+                <a href="/logout">
+                    <input type="submit" value="Logout"
+                           class="login-button" onclick="alert('Logging out')">
+                </a>
                 {% else %}
                 <table>
                     <tr>
@@ -38,9 +39,13 @@
                                 <input type="password" class="login" name="password">
                             </td>
                             <td>
-                                <input type="submit" value="Login" class="login-bottom">
+                                <a href="/login">
+                                <input type="submit" value="Login" class="login-button"></a>
                             </td>
                         </form>
+                    </tr>
+                    <tr>
+                        <td class="error">{{error}}</td>
                     </tr>
                 </table>
                 <br>
@@ -48,11 +53,13 @@
                 {% endif %}
             </div>
         </div>
+        {% if user %}
         <div class="row">
             <a href="/blog/newpost">
                     <h3 class="col-md-12">Write something?</h3>
             </a>
         </div>
+        {% endif %}
         <div class="row">
             {% block content %}
             {% endblock %}

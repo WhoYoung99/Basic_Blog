@@ -13,9 +13,14 @@ body {
     height: 20px;
 }
 
-.login-bottom {
+.login-button {
     font-size: 0.9em;
     height: 20px;
+}
+
+.edit-button {
+    font-size: 0.7em;
+    float: right;
 }
 
 h2 {
@@ -26,6 +31,7 @@ h2 {
 
 .error {
     color: red;
+    text-transform: uppercase;
 }
 
 label {

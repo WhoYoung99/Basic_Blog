@@ -24,7 +24,7 @@ from google.appengine.ext import db
 
 template_dir = os.path.join(os.path.dirname(__file__), "templates")
 jinja_env = jinja2.Environment(loader = jinja2.FileSystemLoader(template_dir),
-                                autoescape = True)
+                                autoescape = True, auto_reload=True)
 
 secret = "Some secret string here..."
 
@@ -75,6 +75,7 @@ class BlogHandler(webapp2.RequestHandler):
 
     def logout(self):
         self.response.headers.add_header('Set-Cookie', 'user_id=; Path=/')
+        self.response.headers.add_header('Set-Cookie', 'user_name=; Path=/')
 
 
 USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
@@ -175,10 +176,11 @@ class Posts(db.Model):
     content = db.TextProperty(required=True)
     created = db.DateTimeProperty(auto_now_add=True)
     modified = db.DateTimeProperty(auto_now=True)
+    author = db.StringProperty()
 
-    def render(self):
+    def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
-        return render_str("post.html", p=self)
+        return render_str("post.html", p=self, user=user)
 
 class Register(Signup):
     def done(self):
@@ -194,7 +196,12 @@ class Register(Signup):
 
 class Login(BlogHandler):
     def get(self):
-        self.render('login.html')
+        # user = self.request.cookies.get('user_name').split('|')[0]
+        if self.read_secure_cookie('user_name'):
+            self.render('login.html', user=user)
+        else:
+            msg = "Not a valid user."
+            self.render('login.html', error=msg)
 
     def post(self):
         username = self.request.get('username')
@@ -208,53 +215,93 @@ class Login(BlogHandler):
             msg = 'Invalid login'
             self.render('login.html', error = msg)
 
+class Logout(BlogHandler):
+    def get(self):
+        self.logout()
+        self.redirect('/blog')
+
 class Newpost(BlogHandler):
     def get(self):
-        self.render("new-post.html")
+        user = self.request.cookies.get('user_name').split('|')[0]
+        if user and self.read_secure_cookie('user_name'):
+            self.render("new-post.html", user=user)
+        else:
+            msg="Please login to write a new post."
+            self.render("new-post.html", error_post=msg)
 
     def post(self):
         subject = self.request.get("subject")
         content = self.request.get("content")
+        author = self.request.cookies.get("user_name").split('|')[0]
 
         if subject and content:
-            post = Posts(subject=subject, content=content)
+            post = Posts(subject=subject, content=content, author=author)
             post.put()
             self.redirect("/blog/%s" % str(post.key().id()))
         else:
             error = "Required both subject and content!"
-            self.render("new-post.html", error=error, subject=subject, content=content)
+            self.render("new-post.html", error_post=error, subject=subject, content=content)
 
 class PostPage(BlogHandler):
     def get(self, post_id):
         key = db.Key.from_path('Posts', int(post_id))
         post = db.get(key)
 
-        self.render("permalink.html", post=post)
+        user = self.request.cookies.get('user_name').split('|')[0]
+        self.render("permalink.html", post=post, user=user)
 
+class EditPage(BlogHandler):
+    def get(self, post_id):
+        user = self.read_secure_cookie('user_name')
+        key = db.Key.from_path('Posts', int(post_id))
+        post = db.get(key)
+        if user and self.request.cookies.get('user_name').split('|')[0] == post.author:
+            subject = post.subject
+            content = post.content
+            self.render("editpost.html", subject=subject, content=content, post_id=post_id)
+        else:
+            msg="Only the author can edit this post."
+            self.render("editpost.html", error_post=msg)
 
-class Main(BlogHandler):
+    def post(self, post_id):
+        key = db.Key.from_path('Posts', int(post_id))
+        post = db.get(key)
+        edit_content = self.request.get("content")
+        if (not post.subject.startswith("[Edit]")) and post.content != edit_content:
+            post.subject = ''.join(["[Edit] ", post.subject])
+        post.content = edit_content
+        post.put()
+        self.redirect("/blog/%s" % str(post.key().id()))
+
+class DeletePage(BlogHandler):
+    def get(self, post_id):
+        self.render("delete.html")
+
+    def post(self, post_id):
+        key = db.Key.from_path('Posts', int(post_id))
+        delete = db.get(key).delete()
+        self.redirect("/blog")
+
+class Main(Login):
     def get(self):
         # posts = Posts.all().order("-created")
-        posts = db.GqlQuery("SELECT * FROM Posts ORDER BY created DESC LIMIT 10")
+        posts = db.GqlQuery("SELECT * FROM Posts ORDER BY created DESC LIMIT 100")
         user = self.request.cookies.get('user_name').split('|')[0]
-        self.render("blog.html", posts=posts, user=user)
-
-    def post(self):
-        username = self.request.get('username')
-        password = self.request.get('password')
-
-        u = User.login(username, password)
-        if u:
-            self.login(u)
-            self.redirect('/blog')
+        if self.read_secure_cookie('user_name'):
+            self.render("blog.html", posts=posts, user=user)
         else:
-            msg = 'Invalid login'
-            self.render('login.html', error = msg)
+            self.logout()
+            self.render("blog.html", posts=posts)
 
-app = webapp2.WSGIApplication([('/blog', Main),
+
+app = webapp2.WSGIApplication([('/', Main),
+                               ('/blog', Main),
                                ('/blog/newpost', Newpost),
+                               ('/blog/edit/([0-9]+)', EditPage),
+                               ('/blog/delete/([0-9]+)', DeletePage),
                                ('/blog/([0-9]+)', PostPage),
                                ('/signup', Register),
                                ('/login', Login),
+                               ('/logout', Logout),
                                ('/welcome', Welcome)],
                                 debug=True)

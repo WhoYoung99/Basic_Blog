@@ -15,6 +15,12 @@ handlers:
 - url: /blog/templates/css
   static_dir: templates/css
 
+- url: /blog/edit/templates/css
+  static_dir: templates/css
+
+- url: /blog/delete/templates/css
+  static_dir: templates/css
+
 - url: /img
   static_dir: img
 

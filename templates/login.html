@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_nologin.html" %}
 {% block content %}
 
 <form method="post">
@@ -15,7 +15,7 @@
             </td>
         </tr>
     </table>
-    <h1 style="color: red;">{{error}}</h1>
+    <h1 class="error">{{error}}</h1>
     <input type="submit">
 </form>
 
