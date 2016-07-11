@@ -1,0 +1,6 @@
+{% extends "base_nologin.html" %}
+{% block content %}
+
+{{post.render(user) | safe}}
+
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends "base_nologin.html" %}
+{% block content %}
+
+<form method="post">
+    <h1>Login</h1>
+    <table>
+        <tr>
+            <td>Username</td>
+            <td><input type="text" name="username"></td>
+        </tr>
+
+        <tr>
+            <td>Password</td>
+            <td><input type="password" name="password">
+            </td>
+        </tr>
+    </table>
+    <h1 class="error">{{error}}</h1>
+    <input type="submit">
+</form>
+
+{% endblock %}

@@ -1,0 +1,33 @@
+{% extends "base_nologin.html" %}
+{% block content %}
+
+<h2 class="col-md-12">Edit Post</h2>
+<form method="post" class="col-md-12">
+    {% if error_post %}
+    <div class="error">
+        {{error_post}}
+    </div>
+    {% else %}
+    <h3>Subject:{{subject}}</h3>
+    <div class="error">
+        *** Warning ***
+        <br>
+        Users are not allowed to edit the subject.
+    </div>
+    <br><br>
+    <h3>Blog</h3>
+    <textarea
+    style="width: 600px; height: 300px;"
+    name="content" value="">{{content}}</textarea>
+    <br>
+    <div class="error">
+        {{error_post}}
+    </div>
+    <br>
+    <input type="submit" value="Edit" class="login-button">
+    <a href={{"/blog/%s" % post_id}}>
+        <input type="submit" value="Cancel" class="login-button">
+    </a>
+    {% endif %}
+</form>
+{% endblock %}

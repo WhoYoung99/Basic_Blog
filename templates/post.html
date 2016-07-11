@@ -1,0 +1,24 @@
+<div class="post">
+    <div class="col-md-12 post-heading">
+        <div class="post-title">
+          <a href="/blog/{{p.key().id()}}">{{p.subject}}</a>
+          {% if p.author == user and user%}
+          <a href="/blog/delete/{{p.key().id()}}">
+            <input type="submit" value="Delete" class="edit-button">
+          </a>
+          <a href="/blog/edit/{{p.key().id()}}">
+            <input type="submit" value="Edit" class="edit-button">
+          </a>
+          {% endif %}
+        </div>
+
+        <div class="post-date">
+          {{p.created.strftime("%b %d, %Y")}}
+        </div>
+        Author: {{p.author}}
+    </div>
+    <div class="col-md-12 post-content">
+        {{p._render_text | safe}}
+    </div>
+    <br><br>
+</div>

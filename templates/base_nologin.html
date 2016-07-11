@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="templates/css/main.css">
+    <link rel="stylesheet" type="text/css"
+     href="templates/css/bootstrap.min.css">
+    <title>Daily Blog</title>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <a href="/blog">
+                <h1 class="col-md-8">Daily Blog</h1>
+            </a>
+        </div>
+        <div class="row">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </div>
+</body>
+</html>

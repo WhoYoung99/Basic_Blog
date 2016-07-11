@@ -1,0 +1,28 @@
+{% extends "base_nologin.html" %}
+{% block content %}
+
+<h2 class="col-md-12">New Post</h2>
+<div method="post" class="col-md-12">
+    <form method="post">
+    {% if error_post %}
+    <div class="error">
+        {{error_post}}
+    </div>
+    {% else %}
+    SUBJECT
+    <br>
+    <input type="text" name="subject" value="{{subject}}">
+    <br><br>
+    BLOG
+    <br>
+    <textarea
+    style="width: 600px; height: 300px;"
+    name="content" value="{{content}}"></textarea>
+    <br><br>
+    <input type="submit">
+    </form>
+    <a href="/blog"><button>Cancel</button></a>
+
+    {% endif %}
+</div>
+{% endblock %}
