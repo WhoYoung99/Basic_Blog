@@ -137,51 +137,19 @@ class Welcome(BlogHandler):
         else:
             self.redirect('/signup')
 
-def make_salt(length=5):
-    return ''.join(random.sample(string.ascii_letters, length))
+# def make_salt(length=5):
+#     return ''.join(random.sample(string.ascii_letters, length))
 
-def make_pw_hash(name, pw, salt=None):
-    if not salt:
-        salt = make_salt()
-    h = hashlib.sha256(name + pw + salt).hexdigest()
-    return "%s,%s" % (salt, h)
+# def make_pw_hash(name, pw, salt=None):
+#     if not salt:
+#         salt = make_salt()
+#     h = hashlib.sha256(name + pw + salt).hexdigest()
+#     return "%s,%s" % (salt, h)
 
-def valid_pw(name, pw, h):
-    salt = h.split(',')[0]
-    return h == make_pw_hash(name, pw, salt)
+# def valid_pw(name, pw, h):
+#     salt = h.split(',')[0]
+#     return h == make_pw_hash(name, pw, salt)
 
-# class User(db.Model):
-#     user = db.StringProperty(required=True)
-#     password = db.StringProperty(required=True)
-#     email = db.StringProperty()
-
-#     @classmethod
-#     def register(cls, user, password, email=None):
-#         return User(user=user,
-#                     password=make_pw_hash(user, password),
-#                     email=email)
-
-#     @classmethod
-#     def login(cls, user, pw):
-#         u = cls.by_name(user)
-#         if u and valid_pw(user, pw, u.password):
-#             return u
-
-#     @classmethod
-#     def by_name(cls, user):
-#         u = User.all().filter('user =', user).get()
-#         return u
-
-# class Posts(db.Model):
-#     subject = db.StringProperty(required=True)
-#     content = db.TextProperty(required=True)
-#     created = db.DateTimeProperty(auto_now_add=True)
-#     modified = db.DateTimeProperty(auto_now=True)
-#     author = db.StringProperty()
-
-#     def render(self, user):
-#         self._render_text = self.content.replace('\n', '<br>')
-#         return render_str("post.html", p=self, user=user)
 
 class Register(Signup):
     def done(self):
@@ -287,8 +255,9 @@ class Main(Login):
     def get(self):
         # posts = Posts.all().order("-created")
         posts = db.GqlQuery("SELECT * FROM Posts ORDER BY created DESC LIMIT 100")
-        user = self.request.cookies.get('user_name').split('|')[0]
+        # user = self.request.cookies.get('user_name').split('|')[0]
         if self.read_secure_cookie('user_name'):
+            user = self.request.cookies.get('user_name').split('|')[0]
             self.render("blog.html", posts=posts, user=user)
         else:
             self.logout()

@@ -1,4 +1,7 @@
 from google.appengine.ext import db
+import random
+import string
+import hashlib
 
 class User(db.Model):
     user = db.StringProperty(required=True)
@@ -33,3 +36,17 @@ class Posts(db.Model):
     def render(self, user):
         self._render_text = self.content.replace('\n', '<br>')
         return render_str("post.html", p=self, user=user)
+
+
+def make_salt(length=5):
+    return ''.join(random.sample(string.ascii_letters, length))
+
+def make_pw_hash(name, pw, salt=None):
+    if not salt:
+        salt = make_salt()
+    h = hashlib.sha256(name + pw + salt).hexdigest()
+    return "%s,%s" % (salt, h)
+
+def valid_pw(name, pw, h):
+    salt = h.split(',')[0]
+    return h == make_pw_hash(name, pw, salt)
